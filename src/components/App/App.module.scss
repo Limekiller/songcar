@@ -1,0 +1,49 @@
+.App {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  gap: 3rem;
+  font-family: "Geist", sans-serif;
+
+  .bg {
+    width: 200vh;
+    height: 200vh;
+    position: absolute;
+    z-index: -1;
+    filter: blur(100rem) brightness(0.75) saturate(3);
+    animation: rotate 120s linear infinite;
+  }
+
+  .albumData {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding-right: 3rem;
+    flex-shrink: 0;
+    width: 33%;
+    color: white;
+
+    h1 {
+      font-size: 6rem;
+      line-height: 6rem;
+      font-weight: 300;
+    }
+    h2 {
+      font-size: 3rem;
+      line-height: 3rem;
+      font-weight: 300;
+      margin-bottom: 3rem;
+    }
+    h3 {
+      font-size: 3rem;
+      line-height: 3rem;
+      margin: 3rem 0;
+      font-weight: 500;
+    }
+  }
+
+  @keyframes rotate {
+    from {transform: rotate(0deg);}
+    to {transform: rotate(360deg);}
+  }
+}
