@@ -6,12 +6,14 @@
   font-family: "Geist", sans-serif;
 
   .bg {
-    width: 200vh;
+    width: 200vw;
     height: 200vh;
     position: absolute;
     z-index: -1;
     filter: blur(100rem) brightness(0.75) saturate(3);
     animation: rotate 120s linear infinite;
+    top: -50vh;
+    left: -50vw;
   }
 
   .albumData {

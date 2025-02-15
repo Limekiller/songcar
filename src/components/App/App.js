@@ -4,11 +4,11 @@ import styles from './App.module.scss'
 
 const App = () => {
     const [metadata, setmetadata] = useState({
-        'artist': 'init',
-        'song': 'init',
-        'album': 'init'
+        'artist': '',
+        'song': '',
+        'album': ''
     })
-    const [albumArt, setalbumArt] = useState('')
+    const [albumArt, setalbumArt] = useState(false)
 
     const updateMetadata = async () => {
         let currentMetadata = await fetch(`http://localhost:3000/metadata`)
@@ -35,8 +35,13 @@ const App = () => {
             let url = encodeURIComponent(`https://musicbrainz.org/ws/2/release?query=artist:"${metadata['artist']}" AND release:"${metadata['album']}" AND status:official&fmt=json`)
             let albumInfo = await fetch(`http://localhost:3000?url=${url}`)
             albumInfo = await albumInfo.json()
-            const albumId = albumInfo['releases'][0].id
-            setalbumArt(`https://coverartarchive.org/release/${albumId}/front-500`)
+
+            if (albumInfo['releases'][0]) {
+                const albumId = albumInfo['releases'][0].id
+                setalbumArt(`https://coverartarchive.org/release/${albumId}/front-500`)
+            } else {
+                setalbumArt(false)
+            }
         }
         getAlbumArt()
     }, [metadata.album])
@@ -65,38 +70,34 @@ const App = () => {
     )}
 
     return <div className={styles.App}>
-        {albumArt ?
-            <>
-                <AnimatePresence>
-                    <motion.img
-                        className={styles.bg}
-                        alt={`The album cover for ${metadata.artist} - ${metadata.album}`}
-                        src={albumArt}
-                        key={albumArt}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1, transition: { delay: 2, duration: 0.5 }}}
-                        exit={{ opacity: 0, transition: { delay: 4, duration: 0.5 }}}
-                    />
-                </AnimatePresence>
-                <AnimatePresence mode="wait">
-                    <motion.img
-                        alt={`The album cover for ${metadata.artist} - ${metadata.album}`}
-                        src={albumArt}
-                        key={albumArt}
-                        style={{
-                            width: "66%",
-                            objectFit: "cover",
-                            boxShadow: "0px 0px 100rem white"
-                        }}
-                        initial={{ opacity: 0, x: '-1rem' }}
-                        animate={{ opacity: 1, x: 0, transition: { delay: 2, duration: 0.5 }}}
-                        exit={{ opacity: 0, x: '-1rem', transition: { duration: 0.5 }}}
-                    />
-                </AnimatePresence>
-            </>
-        : "" }
+        <>
+            <AnimatePresence>
+                <motion.img
+                    className={styles.bg}
+                    src={albumArt || 'https://coverartarchive.org/release/986b2849-60e1-40bb-b57d-1d0bf10e8873/front-500'}
+                    key={albumArt}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1, transition: { delay: 2, duration: 0.5 }}}
+                    exit={{ opacity: 0, transition: { delay: 2.5, duration: 0.5 }}}
+                />
+            </AnimatePresence>
+            <AnimatePresence mode="wait">
+                <motion.img
+                    src={albumArt || ''}
+                    key={albumArt}
+                    style={{
+                        width: "66%",
+                        objectFit: "cover",
+                        boxShadow: "0px 0px 100rem white"
+                    }}
+                    initial={{ opacity: 0, x: '-1rem' }}
+                    animate={{ opacity: 1, x: 0, transition: { delay: 2, duration: 0.5 }}}
+                    exit={{ opacity: 0, x: '-1rem', transition: { duration: 0.5 }}}
+                />
+            </AnimatePresence>
+        </>
 
-        {metadata.artist && metadata.artist !== 'init' ?
+        {metadata.artist ?
             <div className={styles.albumData}>
                 <AnimatePresence mode="wait">
                     {animatedLabel(<h2>{metadata.artist}</h2>, metadata.artist)}
