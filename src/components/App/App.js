@@ -86,7 +86,7 @@ const App = () => {
                     key={albumArt}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1, transition: { delay: 0.5, duration: 0.5 }}}
-                    exit={{ opacity: 0, transition: { delay: 2.5, duration: 0.5 }}}
+                    exit={{ opacity: 0, transition: { delay: 10, duration: 0.5 }}}
                 />
             </AnimatePresence>
             <AnimatePresence mode="wait">
@@ -99,7 +99,7 @@ const App = () => {
                         boxShadow: "0px 0px 10rem white"
                     }}
                     initial={{ opacity: 0, x: '-1rem' }}
-                    animate={{ opacity: 1, x: 0, transition: { delay: 0.5, duration: 0.5 }}}
+                    animate={{ opacity: 1, x: 0, transition: { delay: 2, duration: 0.5 }}}
                     exit={{opacity: 0, x: '-1rem', transition: { duration: 0.5 }}}
                 />
             </AnimatePresence>
