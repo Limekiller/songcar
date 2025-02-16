@@ -10,17 +10,18 @@ const App = () => {
     })
     const [albumArt, setalbumArt] = useState(false)
 
-    const updateMetadata = async () => {
-        let currentMetadata = await fetch(`http://localhost:3000/metadata`)
-        currentMetadata = await currentMetadata.json()
-        setmetadata({
-            'song': currentMetadata.song,
-            'artist': currentMetadata.artist,
-            'album': currentMetadata.album,
-        })
-    }
-
+    // Fetch metadata from the server every second
     useEffect(() => {
+        const updateMetadata = async () => {
+            let currentMetadata = await fetch(`http://localhost:3000/metadata`)
+            currentMetadata = await currentMetadata.json()
+            setmetadata({
+                'song': currentMetadata.song,
+                'artist': currentMetadata.artist,
+                'album': currentMetadata.album,
+            })
+        }
+
         const songCheckInterval = setInterval(() => {
             updateMetadata()
         }, 1000)
@@ -30,6 +31,7 @@ const App = () => {
         }
     }, [])
 
+    // When the album changes, attempt to fetch album art
     useEffect(() => {
         const getAlbumArt = async () => {
             let url = encodeURIComponent(`https://musicbrainz.org/ws/2/release?query=artist:"${metadata['artist']}" AND release:"${metadata['album']}" AND status:official&fmt=json`)
@@ -38,11 +40,17 @@ const App = () => {
 
             if (albumInfo['releases'][0]) {
                 const albumId = albumInfo['releases'][0].id
-                setalbumArt(`https://coverartarchive.org/release/${albumId}/front-500`)
-            } else {
-                setalbumArt(false)
+
+                // Load the cover in the browser via fetch before setting it so that it appears to load right away
+                const albumResp = await fetch(`https://coverartarchive.org/release/${albumId}/front-500`)
+                if (albumResp.status === 200) {
+                    setalbumArt(`https://coverartarchive.org/release/${albumId}/front-500`)
+                }
+                return
             }
+            setalbumArt(false)
         }
+
         getAlbumArt()
     }, [metadata.album])
 
@@ -77,7 +85,7 @@ const App = () => {
                     src={albumArt || 'https://coverartarchive.org/release/986b2849-60e1-40bb-b57d-1d0bf10e8873/front-500'}
                     key={albumArt}
                     initial={{ opacity: 0 }}
-                    animate={{ opacity: 1, transition: { delay: 2, duration: 0.5 }}}
+                    animate={{ opacity: 1, transition: { delay: 0.5, duration: 0.5 }}}
                     exit={{ opacity: 0, transition: { delay: 2.5, duration: 0.5 }}}
                 />
             </AnimatePresence>
@@ -88,11 +96,11 @@ const App = () => {
                     style={{
                         width: "66%",
                         objectFit: "cover",
-                        boxShadow: "0px 0px 100rem white"
+                        boxShadow: "0px 0px 10rem white"
                     }}
                     initial={{ opacity: 0, x: '-1rem' }}
-                    animate={{ opacity: 1, x: 0, transition: { delay: 2, duration: 0.5 }}}
-                    exit={{ opacity: 0, x: '-1rem', transition: { duration: 0.5 }}}
+                    animate={{ opacity: 1, x: 0, transition: { delay: 0.5, duration: 0.5 }}}
+                    exit={{opacity: 0, x: '-1rem', transition: { duration: 0.5 }}}
                 />
             </AnimatePresence>
         </>

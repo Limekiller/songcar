@@ -7,10 +7,10 @@
 
   .bg {
     width: 200vw;
-    height: 200vh;
+    height: 300vh;
     position: absolute;
     z-index: -1;
-    filter: blur(100rem) brightness(0.75) saturate(3);
+    filter: blur(10rem) brightness(0.75) saturate(3);
     animation: rotate 120s linear infinite;
     top: -50vh;
     left: -50vw;
