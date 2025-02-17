@@ -10,6 +10,28 @@ const App = () => {
     })
     const [albumArt, setalbumArt] = useState(false)
 
+    const getOldestResult = data => {
+        let returnRelease
+        let oldestReleaseDate = new Date()
+        for (let recording of data.recordings) {
+            for (let release of recording.releases) {
+                if (!release['date'] || release['date'].length < 10) {
+                    continue
+                }
+                if (release['title'].includes('live')) {
+                    continue
+                }
+
+                const recordingReleaseDate = new Date(release['date'])
+                if (recordingReleaseDate < oldestReleaseDate) {
+                    oldestReleaseDate = recordingReleaseDate
+                    returnRelease = release
+                }
+            }
+        }
+        return returnRelease
+    }
+
     const parseSiriusXMData = async data => {
         const channelName = data.song.split(' | ')[0]
         let url = encodeURIComponent(`http://xmplaylist.com/api/station/${channelName.replace(/\W/g, '')}`)
@@ -19,10 +41,10 @@ const App = () => {
         const sxmTitle = sxmData.results[0].track.title
         const sxmArtist = sxmData.results[0].track.artists[0]
 
-        url = encodeURIComponent(`https://musicbrainz.org/ws/2/recording?query=artist:"${sxmArtist}" AND recording:"${sxmTitle}" AND status:official&fmt=json`)
+        url = encodeURIComponent(`https://musicbrainz.org/ws/2/recording?query=artist:"${sxmArtist}" AND recording:"${sxmTitle}" AND video:false AND status:official&fmt=json`)
         let mbResponse = await fetch(`http://localhost:3000?url=${url}`)
         mbResponse = await mbResponse.json()
-        const album = mbResponse.recordings[0].releases[0].title
+        const album = getOldestResult(mbResponse).title
 
         return {
             'artist': sxmArtist,
@@ -111,7 +133,7 @@ const App = () => {
                     src={albumArt || 'https://coverartarchive.org/release/986b2849-60e1-40bb-b57d-1d0bf10e8873/front-500'}
                     key={albumArt}
                     initial={{ opacity: 0 }}
-                    animate={{ opacity: 1, transition: { delay: 0.5, duration: 0.5 }}}
+                    animate={{ opacity: 1, transition: { delay: 2, duration: 5 }}}
                     exit={{ opacity: 0, transition: { delay: 10, duration: 0.5 }}}
                 />
             </AnimatePresence>
