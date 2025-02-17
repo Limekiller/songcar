@@ -1,0 +1,9 @@
+[Unit]
+Description=Beacon service for songcar
+PartOf=graphical-session.target
+
+[Service]
+ExecStart=/opt/songcar/beacon.sh
+
+[Install]
+WantedBy=default.target

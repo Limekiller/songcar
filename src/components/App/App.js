@@ -10,11 +10,37 @@ const App = () => {
     })
     const [albumArt, setalbumArt] = useState(false)
 
+    const parseSiriusXMData = async data => {
+        const channelName = data.song.split(' | ')[0]
+        let url = encodeURIComponent(`http://xmplaylist.com/api/station/${channelName.replace(/\W/g, '')}`)
+        let sxmData = await fetch(`http://localhost:3000?url=${url}`)
+        sxmData = await sxmData.json()
+
+        const sxmTitle = sxmData.results[0].track.title
+        const sxmArtist = sxmData.results[0].track.artists[0]
+
+        url = encodeURIComponent(`https://musicbrainz.org/ws/2/recording?query=artist:"${sxmArtist}" AND recording:"${sxmTitle}" AND status:official&fmt=json`)
+        let mbResponse = await fetch(`http://localhost:3000?url=${url}`)
+        mbResponse = await mbResponse.json()
+        const album = mbResponse.recordings[0].releases[0].title
+
+        return {
+            'artist': sxmArtist,
+            'song': sxmTitle,
+            'album': album
+        }
+    }
+
     // Fetch metadata from the server every second
     useEffect(() => {
         const updateMetadata = async () => {
             let currentMetadata = await fetch(`http://localhost:3000/metadata`)
             currentMetadata = await currentMetadata.json()
+
+            if (currentMetadata.song.includes(' | SiriusXM')) {
+                currentMetadata = await parseSiriusXMData(currentMetadata)
+            }
+
             setmetadata({
                 'song': currentMetadata.song,
                 'artist': currentMetadata.artist,
@@ -105,7 +131,7 @@ const App = () => {
             </AnimatePresence>
         </>
 
-        {metadata.artist ?
+        {metadata.song ?
             <div className={styles.albumData}>
                 <AnimatePresence mode="wait">
                     {animatedLabel(<h2>{metadata.artist}</h2>, metadata.artist)}
