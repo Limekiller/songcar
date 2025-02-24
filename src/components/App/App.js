@@ -11,26 +11,44 @@ const App = () => {
     const [albumArt, setalbumArt] = useState(false)
 
     /**
-     * Given a list of recordings containing releases from MusicBrainz, return the oldest release
+     * Given a list of recordings containing releases from MusicBrainz, return the oldest release, prioritizing albums
      * We also include some conditions to try to filter out the mountains of bad data included in this awful API
      * @param data {obj}: The object containing an array of recordings and releases
      * @return {obj}: The most fitting release we could find
      */
-    const getOldestRelease = data => {
+    const getBestRelease = (data, artist) => {
         let returnRelease
         let oldestReleaseDate = new Date()
 
+        // If there's only one recording and release, just return it right away
         if (data.recordings.length === 1 && data.recordings[0].releases.length === 1) {
             return data.recordings[0].releases[0]
         }
+
         for (let recording of data.recordings) {
             for (let release of recording.releases) {
+
+                // If our current best choice is an Album, and the current one we're looking at isn't, ignore it
+                let isNotAlbumAndCurrentIsAlbum = false
+                if (returnRelease && returnRelease['release-group']) {
+                    if (returnRelease['release-group']['primary-type'] === 'Album' && release['release-group']['primary-type'] !== 'Album') {
+                        isNotAlbumAndCurrentIsAlbum = true
+                    }
+                }
+
+                // Ignore compilations, releases without the full date, and live albums
                 const isComp = release['release-group']['secondary-types'] && release['release-group']['secondary-types'].includes('Compilation')
                 const hasPartialData = release['date'] && release['date'].length < 10
                 const isLiveAlbum = !release['title'] || release['title'].includes('live')
-                if (isComp || hasPartialData || isLiveAlbum) {
+
+                // If the current release has an artist-credit property, and it isn't the artist we want, ignore it
+                let isCorrectArtist = true
+                isCorrectArtist = release['artist-credit'] && release['artist-credit'][0]['name'] !== artist ? false : true
+                if (isComp || hasPartialData || isLiveAlbum || !isCorrectArtist || isNotAlbumAndCurrentIsAlbum) {
                     continue
                 }
+
+                // If we made it through all that, this is a pretty good candidate. Switch to it if it's older than the one we're currently looking at.
                 const recordingReleaseDate = new Date(release['date'])
                 if (recordingReleaseDate < oldestReleaseDate) {
                     oldestReleaseDate = recordingReleaseDate
@@ -38,6 +56,7 @@ const App = () => {
                 }
             }
         }
+
         return returnRelease
     }
 
@@ -51,7 +70,7 @@ const App = () => {
         let url = encodeURIComponent(`https://musicbrainz.org/ws/2/recording?query=artist:"${artist}" AND recording:"${title}" AND video:false AND (primarytype:album OR primarytype:single OR primarytype:EP) AND status:official &fmt=json`)
         let mbResponse = await fetch(`http://localhost:3000?url=${url}`)
         mbResponse = await mbResponse.json()
-        const album = getOldestRelease(mbResponse)?.title
+        const album = getBestRelease(mbResponse, artist)?.title
         return album
     }
 
@@ -92,6 +111,8 @@ const App = () => {
                 currentMetadata = await parseSiriusXMData(currentMetadata)
             }
 
+            // Some metadata just includes the song and artist in the title field like "Song - Artist"
+            // If that's the case--the artist is blank and the title includes " - "--attempt to parse it
             if (!currentMetadata.artist && !currentMetadata.album && currentMetadata.song.includes(' - ')) {
                 let song = currentMetadata.song.split(' - ')[1]
                 let artist = currentMetadata.song.split(' - ')[0]
@@ -128,7 +149,7 @@ const App = () => {
             let url = encodeURIComponent(`https://musicbrainz.org/ws/2/release?query=artist:"${metadata['artist']}" AND release:"${metadata['album']}" AND status:official AND (primarytype:album OR primarytype:single OR primarytype:EP) &fmt=json`)
             let albumInfo = await fetch(`http://localhost:3000?url=${url}`)
             albumInfo = await albumInfo.json()
-            albumInfo = getOldestRelease({recordings: [albumInfo]})
+            albumInfo = getBestRelease({recordings: [albumInfo]}, metadata['artist'])
 
             if (albumInfo.id) {
                 const albumId = albumInfo.id
