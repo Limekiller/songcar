@@ -6,7 +6,8 @@ const App = () => {
     const [metadata, setmetadata] = useState({
         'artist': '',
         'song': '',
-        'album': ''
+        'album': '',
+        'refetch': true
     })
     const [albumArt, setalbumArt] = useState(false)
 
@@ -39,7 +40,7 @@ const App = () => {
                 // Ignore compilations, releases without the full date, and live albums
                 const isComp = release['release-group']['secondary-types'] && release['release-group']['secondary-types'].includes('Compilation')
                 const hasPartialData = release['date'] && release['date'].length < 10
-                const isLiveAlbum = !release['title'] || release['title'].includes('live')
+                const isLiveAlbum = !release['title'] || release['title'].toLowerCase().includes('live')
 
                 // If the current release has an artist-credit property, and it isn't the artist we want, ignore it
                 let isCorrectArtist = true
@@ -70,7 +71,9 @@ const App = () => {
         let url = encodeURIComponent(`https://musicbrainz.org/ws/2/recording?query=artist:"${artist}" AND recording:"${title}" AND video:false AND (primarytype:album OR primarytype:single OR primarytype:EP) AND status:official &fmt=json`)
         let mbResponse = await fetch(`http://localhost:3000?url=${url}`)
         mbResponse = await mbResponse.json()
-        const album = getBestRelease(mbResponse, artist)?.title
+        const album = getBestRelease(mbResponse, artist)
+        console.log(album)
+        loadAndSetAlbumArt(album.id)
         return album
     }
 
@@ -91,11 +94,26 @@ const App = () => {
         const sxmArtist = sxmData.results[0].track.artists[0]
         const sxmAlbum = await getAlbumFromSong_Artist(sxmTitle, sxmArtist)
 
+        loadAndSetAlbumArt(sxmAlbum.id)
         return {
             'artist': sxmArtist,
             'song': sxmTitle,
-            'album': sxmAlbum
+            'album': sxmAlbum.title,
+            'refetch': false
         }
+    }
+
+    const loadAndSetAlbumArt = async albumId => {
+        if (albumId) {
+            // Load the cover in the browser via fetch before setting it so that it appears to load right away
+            const albumResp = await fetch(`https://coverartarchive.org/release/${albumId}/front-500`)
+            if (albumResp.status === 200) {
+                setalbumArt(`https://coverartarchive.org/release/${albumId}/front-500`)
+                return
+            }
+        }
+
+        setalbumArt(false)
     }
 
     // Fetch metadata from the server every second
@@ -106,6 +124,7 @@ const App = () => {
         const updateMetadata = async () => {
             let currentMetadata = await fetch(`http://localhost:3000/metadata`)
             currentMetadata = await currentMetadata.json()
+            currentMetadata = {...currentMetadata, 'refetch': true}
 
             if (currentMetadata.song.includes(' | SiriusXM')) {
                 currentMetadata = await parseSiriusXMData(currentMetadata)
@@ -120,15 +139,12 @@ const App = () => {
                 currentMetadata = {
                     'song': song,
                     'artist': artist,
-                    'album': album
+                    'album': album.title,
+                    'refetch': false
                 }
             }
 
-            setmetadata({
-                'song': currentMetadata.song,
-                'artist': currentMetadata.artist,
-                'album': currentMetadata.album,
-            })
+            setmetadata(currentMetadata)
         }
 
         const songCheckInterval = setInterval(() => {
@@ -150,21 +166,12 @@ const App = () => {
             let albumInfo = await fetch(`http://localhost:3000?url=${url}`)
             albumInfo = await albumInfo.json()
             albumInfo = getBestRelease({recordings: [albumInfo]}, metadata['artist'])
-
-            if (albumInfo.id) {
-                const albumId = albumInfo.id
-
-                // Load the cover in the browser via fetch before setting it so that it appears to load right away
-                const albumResp = await fetch(`https://coverartarchive.org/release/${albumId}/front-500`)
-                if (albumResp.status === 200) {
-                    setalbumArt(`https://coverartarchive.org/release/${albumId}/front-500`)
-                    return
-                }
-            }
-            setalbumArt(false)
+            loadAndSetAlbumArt(albumInfo.id)
         }
 
-        getAlbumArt()
+        if (metadata.refetch) {
+            getAlbumArt()
+        }
     }, [metadata.album])
 
     const animatedLabel = (innerJSX, key) => { return (
