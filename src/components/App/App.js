@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { motion, AnimatePresence } from "motion/react"
 import styles from './App.module.scss'
 
@@ -10,6 +10,9 @@ const App = () => {
         'refetch': true
     })
     const [albumArt, setalbumArt] = useState(false)
+
+    const metadataRef = useRef(metadata)
+    metadataRef.current = metadata;
 
     /**
      * Given a list of recordings containing releases from MusicBrainz, return the oldest release, prioritizing albums
@@ -68,12 +71,10 @@ const App = () => {
      * @return {obj}: A release object from MusicBrainz
      */
     const getAlbumFromSong_Artist = async (title, artist) => {
-        let url = encodeURIComponent(`https://musicbrainz.org/ws/2/recording?query=artist:"${artist}" AND recording:"${title}" AND video:false AND (primarytype:album OR primarytype:single OR primarytype:EP) AND status:official &fmt=json`)
+        let url = encodeURIComponent(`https://musicbrainz.org/ws/2/recording?query=artist:"${encodeURIComponent(artist)}" AND recording:"${encodeURIComponent(title)}" AND video:false AND (primarytype:album OR primarytype:single OR primarytype:EP) AND status:official &fmt=json`)
         let mbResponse = await fetch(`http://localhost:3000?url=${url}`)
         mbResponse = await mbResponse.json()
         const album = getBestRelease(mbResponse, artist)
-        console.log(album)
-        loadAndSetAlbumArt(album.id)
         return album
     }
 
@@ -94,15 +95,18 @@ const App = () => {
         const sxmArtist = sxmData.results[0].track.artists[0]
         const sxmAlbum = await getAlbumFromSong_Artist(sxmTitle, sxmArtist)
 
-        loadAndSetAlbumArt(sxmAlbum.id)
         return {
             'artist': sxmArtist,
             'song': sxmTitle,
-            'album': sxmAlbum.title,
-            'refetch': false
+            'album': sxmAlbum?.title || '',
+            'albumId': sxmAlbum?.id || ''
         }
     }
 
+    /**
+     * Given a MusicBrainz album ID, we fetch the corresponding album art and then set it
+     * @param {str} albumId: The ID of the album
+     */
     const loadAndSetAlbumArt = async albumId => {
         if (albumId) {
             // Load the cover in the browser via fetch before setting it so that it appears to load right away
@@ -116,37 +120,43 @@ const App = () => {
         setalbumArt(false)
     }
 
-    // Fetch metadata from the server every second
-    useEffect(() => {
-        /**
-         * Pull the playing metadata from the Python server and parse it as necessary
-         */
-        const updateMetadata = async () => {
-            let currentMetadata = await fetch(`http://localhost:3000/metadata`)
-            currentMetadata = await currentMetadata.json()
-            currentMetadata = {...currentMetadata, 'refetch': true}
+    /**
+     * Pull the playing metadata from the Python server and parse it as necessary
+     */
+    const updateMetadata = async () => {
+        let currentMetadata = await fetch(`http://localhost:3000/metadata`)
+        currentMetadata = await currentMetadata.json()
+        currentMetadata = {...currentMetadata, 'refetch': true}
 
-            if (currentMetadata.song.includes(' | SiriusXM')) {
-                currentMetadata = await parseSiriusXMData(currentMetadata)
-            }
-
-            // Some metadata just includes the song and artist in the title field like "Song - Artist"
-            // If that's the case--the artist is blank and the title includes " - "--attempt to parse it
-            if (!currentMetadata.artist && !currentMetadata.album && currentMetadata.song.includes(' - ')) {
-                let song = currentMetadata.song.split(' - ')[1]
-                let artist = currentMetadata.song.split(' - ')[0]
-                let album = await getAlbumFromSong_Artist(song, artist)
-                currentMetadata = {
-                    'song': song,
-                    'artist': artist,
-                    'album': album.title,
-                    'refetch': false
-                }
-            }
-
-            setmetadata(currentMetadata)
+        if (currentMetadata.song.includes(' | SiriusXM')) {
+            currentMetadata = await parseSiriusXMData(currentMetadata)
         }
 
+        // Some metadata just includes the song and artist in the title field like "Song - Artist"
+        // If that's the case--the artist is blank and the title includes " - "--attempt to parse it
+        if (!currentMetadata.artist && !currentMetadata.album && currentMetadata.song.includes(' - ')) {
+            let song = currentMetadata.song.split(' - ')[1]
+            let artist = currentMetadata.song.split(' - ')[0]
+            let album = await getAlbumFromSong_Artist(song, artist)
+            currentMetadata = {
+                'song': song,
+                'artist': artist,
+                'album': album?.title || '',
+                'albumId': album?.id || '',
+            }
+        }
+
+        // If the album has changed, fetch new art
+        if (currentMetadata.album !== metadataRef.current.album) {
+            loadAndSetAlbumArt(currentMetadata.albumId)
+            currentMetadata = {...currentMetadata, 'refetch': false}
+        }
+
+        setmetadata(currentMetadata)
+    }
+
+    // Fetch metadata from the server every second
+    useEffect(() => {
         const songCheckInterval = setInterval(() => {
             updateMetadata()
         }, 1000)
@@ -162,7 +172,7 @@ const App = () => {
          * Use the currently set album to try to fetch its art from MusicBrains
          */
         const getAlbumArt = async () => {
-            let url = encodeURIComponent(`https://musicbrainz.org/ws/2/release?query=artist:"${metadata['artist']}" AND release:"${metadata['album']}" AND status:official AND (primarytype:album OR primarytype:single OR primarytype:EP) &fmt=json`)
+            let url = encodeURIComponent(`https://musicbrainz.org/ws/2/release?query=artist:"${encodeURIComponent(metadata['artist'])}" AND release:"${encodeURIComponent(metadata['album'])}" AND status:official AND (primarytype:album OR primarytype:single OR primarytype:EP) &fmt=json`)
             let albumInfo = await fetch(`http://localhost:3000?url=${url}`)
             albumInfo = await albumInfo.json()
             albumInfo = getBestRelease({recordings: [albumInfo]}, metadata['artist'])
