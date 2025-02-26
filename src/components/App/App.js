@@ -128,8 +128,10 @@ const App = () => {
         currentMetadata = await currentMetadata.json()
         currentMetadata = {...currentMetadata, 'refetch': true}
 
+        let specialCase = false
         if (currentMetadata.song.includes(' | SiriusXM')) {
             currentMetadata = await parseSiriusXMData(currentMetadata)
+            specialCase = true
         }
 
         // Some metadata just includes the song and artist in the title field like "Song - Artist"
@@ -144,10 +146,11 @@ const App = () => {
                 'album': album?.title || '',
                 'albumId': album?.id || '',
             }
+            specialCase = true
         }
 
         // If the album has changed, fetch new art
-        if (currentMetadata.album !== metadataRef.current.album) {
+        if (currentMetadata.album !== metadataRef.current.album && specialCase) {
             loadAndSetAlbumArt(currentMetadata.albumId)
             currentMetadata = {...currentMetadata, 'refetch': false}
         }
