@@ -41,14 +41,13 @@ const App = () => {
                 }
 
                 // Ignore compilations, releases without the full date, and live albums
-                const isComp = release['release-group']['secondary-types'] && release['release-group']['secondary-types'].includes('Compilation')
+                const isComp = release['release-group']['secondary-types'] && release['release-group']['secondary-types'].includes('Compilation') ? true : false
                 const hasPartialData = release['date'] && release['date'].length < 10
-                const isLiveAlbum = !release['title'] || release['title'].toLowerCase().includes('live')
 
                 // If the current release has an artist-credit property, and it isn't the artist we want, ignore it
                 let isCorrectArtist = true
-                isCorrectArtist = release['artist-credit'] && release['artist-credit'][0]['name'] !== artist ? false : true
-                if (isComp || hasPartialData || isLiveAlbum || !isCorrectArtist || isNotAlbumAndCurrentIsAlbum) {
+                isCorrectArtist = release['artist-credit'] && release['artist-credit'][0]['name'].toLowerCase() !== artist.toLowerCase() ? false : true
+                if (returnRelease && (isComp || hasPartialData || !isCorrectArtist || isNotAlbumAndCurrentIsAlbum)) {
                     continue
                 }
 
@@ -179,7 +178,11 @@ const App = () => {
             let albumInfo = await fetch(`http://localhost:3000?url=${url}`)
             albumInfo = await albumInfo.json()
             albumInfo = getBestRelease({recordings: [albumInfo]}, metadata['artist'])
-            loadAndSetAlbumArt(albumInfo.id)
+            if (albumInfo && albumInfo.id) {
+                loadAndSetAlbumArt(albumInfo.id)
+            } else {
+                setalbumArt(false)
+            }
         }
 
         if (metadata.refetch) {
