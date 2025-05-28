@@ -30,8 +30,10 @@ const getBestRelease = (data, artist) => {
 
             // Ignore compilations, releases without the full date, and live albums
             const hasPartialData = release['date'] && release['date'].length < 10
-            const isComp = release['release-group']['secondary-types'] && release['release-group']['secondary-types'].includes('Compilation') ? true : false
-            if (isComp) {
+            const isCompOrLive = release['release-group']['secondary-types'] &&
+                (release['release-group']['secondary-types'].includes('Compilation') ||
+                release['release-group']['secondary-types'].includes('Live')) ? true : false;
+            if (isCompOrLive) {
                 continue;
             }
 
