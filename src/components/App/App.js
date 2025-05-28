@@ -70,7 +70,7 @@ const App = () => {
      * @return {obj}: A release object from MusicBrainz
      */
     const getAlbumFromSong_Artist = async (title, artist) => {
-        let url = encodeURIComponent(`https://musicbrainz.org/ws/2/recording?query=artist:"${encodeURIComponent(artist)}" AND recording:"${encodeURIComponent(title)}" AND video:false AND (primarytype:album OR primarytype:single OR primarytype:EP) AND status:official &fmt=json`)
+        let url = encodeURIComponent(`https://musicbrainz.org/ws/2/recording?query=artist:"${encodeURIComponent(artist)}" AND recording:"${encodeURIComponent(title)}" AND video:false AND (primarytype:album OR primarytype:single OR primarytype:EP) &fmt=json`)
         let mbResponse = await fetch(`http://localhost:3000?url=${url}`)
         mbResponse = await mbResponse.json()
         const album = getBestRelease(mbResponse, artist)
@@ -126,6 +126,10 @@ const App = () => {
         let currentMetadata = await fetch(`http://localhost:3000/metadata`)
         currentMetadata = await currentMetadata.json()
         currentMetadata = {...currentMetadata, 'refetch': true}
+
+        if (!currentMetadata.song) {
+            return
+        }
 
         let specialCase = false
         if (currentMetadata.song.includes(' | SiriusXM')) {
