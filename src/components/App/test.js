@@ -29,14 +29,17 @@ const getBestRelease = (data, artist) => {
             }
 
             // Ignore compilations, releases without the full date, and live albums
-            const isComp = release['release-group']['secondary-types'] && release['release-group']['secondary-types'].includes('Compilation') ? true : false
             const hasPartialData = release['date'] && release['date'].length < 10
+            const isComp = release['release-group']['secondary-types'] && release['release-group']['secondary-types'].includes('Compilation') ? true : false
+            if (isComp) {
+                continue;
+            }
 
             // If the current release has an artist-credit property, and it isn't the artist we want, ignore it
             let isCorrectArtist = true
-
             //isCorrectArtist = release['artist-credit'] && release['artist-credit'][0]['name'].toLowerCase() !== artist.toLowerCase() ? false : true
-            if (returnRelease && (isComp || hasPartialData || !isCorrectArtist || isNotAlbumAndCurrentIsAlbum)) {
+
+            if (returnRelease && (hasPartialData || !isCorrectArtist || isNotAlbumAndCurrentIsAlbum)) {
                 continue
             }
 
