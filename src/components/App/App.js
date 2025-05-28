@@ -30,7 +30,13 @@ const App = () => {
         }
 
         for (let recording of data.recordings) {
+            if (recording.disambiguation) {
+                continue
+            }
             for (let release of recording.releases) {
+                if (release.disambiguation) {
+                    continue
+                }
 
                 // If our current best choice is an Album, and the current one we're looking at isn't, ignore it
                 let isNotAlbumAndCurrentIsAlbum = false
@@ -46,7 +52,7 @@ const App = () => {
 
                 // If the current release has an artist-credit property, and it isn't the artist we want, ignore it
                 let isCorrectArtist = true
-                isCorrectArtist = release['artist-credit'] && release['artist-credit'][0]['name'].toLowerCase() !== artist.toLowerCase() ? false : true
+                //isCorrectArtist = release['artist-credit'] && release['artist-credit'][0]['name'].toLowerCase() !== artist.toLowerCase() ? false : true
                 if (returnRelease && (isComp || hasPartialData || !isCorrectArtist || isNotAlbumAndCurrentIsAlbum)) {
                     continue
                 }
