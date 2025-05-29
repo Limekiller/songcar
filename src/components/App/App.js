@@ -241,24 +241,26 @@ const App = () => {
                     exit={{ opacity: 0, transition: { delay: 10, duration: 0.5 }}}
                 />
             </AnimatePresence>
-            <AnimatePresence mode="wait">
-                <motion.img
-                    src={albumArt || ''}
-                    key={albumArt}
-                    style={{
-                        width: "66%",
-                        objectFit: "cover",
-                        boxShadow: "0px 0px 10rem white"
-                    }}
-                    initial={{ opacity: 0, x: '-1rem' }}
-                    animate={{ opacity: 1, x: 0, transition: { delay: 5, duration: 0.5 }}}
-                    exit={{opacity: 0, x: '-1rem', transition: { duration: 0.5 }}}
-                />
-            </AnimatePresence>
+            {albumArt ?
+                <AnimatePresence mode="wait">
+                        <motion.img
+                            src={albumArt || ''}
+                            key={albumArt}
+                            style={{
+                                width: "66%",
+                                objectFit: "cover",
+                                boxShadow: "0px 0px 10rem white"
+                            }}
+                            initial={{ opacity: 0, x: '-1rem' }}
+                            animate={{ opacity: 1, x: 0, transition: { delay: 5, duration: 0.5 }}}
+                            exit={{opacity: 0, x: '-1rem', transition: { duration: 0.5 }}}
+                        />
+                </AnimatePresence>
+            : ""}
         </>
 
         {metadata.song ?
-            <div className={styles.albumData}>
+            <div className={`${styles.albumData} ${!albumArt ? styles.centered : ''}`}>
                 <AnimatePresence mode="wait">
                     {animatedLabel(<h2>{metadata.artist}</h2>, metadata.artist)}
                 </AnimatePresence>
