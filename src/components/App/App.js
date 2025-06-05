@@ -137,12 +137,12 @@ const App = () => {
     const updateMetadata = async () => {
         let currentMetadata = await fetch(`http://localhost:3000/metadata`)
         currentMetadata = await currentMetadata.json()
-        currentMetadata = {...currentMetadata, 'refetch': true}
 
-        if (!currentMetadata.song) {
+        if (!currentMetadata.song || currentMetadata.song === "") {
             return
         }
 
+        currentMetadata = {...currentMetadata, 'refetch': true}
         let specialCase = false
         if (currentMetadata.song.includes(' | SiriusXM')) {
             currentMetadata = await parseSiriusXMData(currentMetadata)
@@ -190,6 +190,10 @@ const App = () => {
          * Use the currently set album to try to fetch its art from MusicBrains
          */
         const getAlbumArt = async () => {
+            if (!metadataRef.current.song) {
+                return
+            }
+
             let url = encodeURIComponent(`https://musicbrainz.org/ws/2/release?query=artist:"${encodeURIComponent(metadata['artist'])}" AND release:"${encodeURIComponent(metadata['album'])}" AND status:official AND (primarytype:album OR primarytype:single OR primarytype:EP) &fmt=json`)
             let albumInfo = await fetch(`http://localhost:3000?url=${url}`)
             albumInfo = await albumInfo.json()

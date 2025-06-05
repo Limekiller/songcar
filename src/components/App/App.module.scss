@@ -26,9 +26,10 @@
     color: white;
 
     &.centered {
-      width: 100%;
       text-align: center;
       align-self: center;
+      margin: 0 auto;
+      padding: 0 2rem;
     }
 
     h1 {
