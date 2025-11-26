@@ -13,6 +13,7 @@ class SongController():
     song = ''
     artist = ''
     album = ''
+    url = ''
 
 
 class Proxy(http.server.SimpleHTTPRequestHandler):
@@ -26,7 +27,8 @@ class Proxy(http.server.SimpleHTTPRequestHandler):
             metadata = json.dumps({
                 'song': SongController.song,
                 'artist': SongController.artist,
-                'album': SongController.album
+                'album': SongController.album,
+                'url': SongController.url
             })
 
             self.send_response(200)
@@ -36,7 +38,7 @@ class Proxy(http.server.SimpleHTTPRequestHandler):
             self.wfile.write(str.encode(metadata))
 
         else:
-            basepath = './build/'
+            basepath = './dist/'
             path = 'index.html'
 
             if self.path and self.path != '/':
@@ -64,11 +66,13 @@ class Proxy(http.server.SimpleHTTPRequestHandler):
             return
 
         if 'update' in self.path:
+	print(body)
             content_length = int(self.headers['Content-Length'])
             body = json.loads(self.rfile.read(content_length).decode('utf-8'))
             SongController.song = body['song']
             SongController.artist = body['artist']
             SongController.album = body['album']
+            SongController.url = body['url']
 
             self.send_response(200)
             self.send_header('Content-type', 'application/json')

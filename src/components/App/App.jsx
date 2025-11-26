@@ -7,6 +7,7 @@ const App = () => {
         'artist': '',
         'song': '',
         'album': '',
+        'url': '',
         'refetch': true
     })
     const [albumArt, setalbumArt] = useState(false)
@@ -97,7 +98,7 @@ const App = () => {
      * @return {obj}: An object containing song information
      */
     const parseSiriusXMData = async data => {
-        const channelName = data.song.split(' | ')[0]
+        const channelName = data.song.split(' · ')[1]
         let url = encodeURIComponent(`http://xmplaylist.com/api/station/${channelName.replace(/\W/g, '')}`)
         let sxmData = await fetch(`http://localhost:3000?url=${url}`)
         sxmData = await sxmData.json()
@@ -144,7 +145,7 @@ const App = () => {
 
         currentMetadata = {...currentMetadata, 'refetch': true}
         let specialCase = false
-        if (currentMetadata.song.includes(' | SiriusXM')) {
+        if (currentMetadata.url.includes('siriusxm')) {
             currentMetadata = await parseSiriusXMData(currentMetadata)
             specialCase = true
         }
@@ -160,6 +161,7 @@ const App = () => {
                 'artist': artist,
                 'album': album?.title || '',
                 'albumId': album?.id || '',
+                'url': url || '',
             }
             specialCase = true
         }
