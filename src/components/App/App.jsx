@@ -214,6 +214,7 @@ const App = () => {
 
     const animatedLabel = (innerJSX, key) => { return (
         <motion.div
+            layout
             className={styles.animatedLabel}
             key={key}
             initial={{ opacity: 0 }}

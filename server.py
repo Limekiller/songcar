@@ -66,7 +66,6 @@ class Proxy(http.server.SimpleHTTPRequestHandler):
             return
 
         if 'update' in self.path:
-	print(body)
             content_length = int(self.headers['Content-Length'])
             body = json.loads(self.rfile.read(content_length).decode('utf-8'))
             SongController.song = body['song']
