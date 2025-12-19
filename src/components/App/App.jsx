@@ -156,6 +156,7 @@ const App = () => {
             let song = currentMetadata.song.split(' - ')[1]
             let artist = currentMetadata.song.split(' - ')[0]
             let album = await getAlbumFromSong_Artist(song, artist)
+            let url = currentMetadata.url
             currentMetadata = {
                 'song': song,
                 'artist': artist,
