@@ -83,6 +83,8 @@ const App = () => {
      * @return {obj}: A release object from MusicBrainz
      */
     const getAlbumFromSong_Artist = async (title, artist) => {
+        artist = artist.replace('&', 'and');
+        title = title.replace('&', 'and');
         let url = encodeURIComponent(`https://musicbrainz.org/ws/2/recording?query=artist:"${encodeURIComponent(artist)}" AND recording:"${encodeURIComponent(title)}" AND video:false AND (primarytype:album OR primarytype:single OR primarytype:EP) &fmt=json`)
         let mbResponse = await fetch(`http://localhost:3000?url=${url}`)
         mbResponse = await mbResponse.json()
@@ -165,6 +167,15 @@ const App = () => {
                 'url': url || '',
             }
             specialCase = true
+        } else if (!currentMetadata.album && currentMetadata.artist && currentMetadata.song) {
+            let album = await getAlbumFromSong_Artist(currentMetadata.song, currentMetadata.artist)
+            currentMetadata = {
+                'song': currentMetadata.song,
+                'artist': currentMetadata.artist,
+                'album': album?.title || '',
+                'albumId': album?.id || '',
+                'url': currentMetadata.url || '',
+            }
         }
 
         // If the album has changed, fetch new art
@@ -197,7 +208,8 @@ const App = () => {
                 return
             }
 
-            let url = encodeURIComponent(`https://musicbrainz.org/ws/2/release?query=artist:"${encodeURIComponent(metadata['artist'])}" AND release:"${encodeURIComponent(metadata['album'])}" AND status:official AND (primarytype:album OR primarytype:single OR primarytype:EP) &fmt=json`)
+            const artist = metadata['artist'].replace('&', 'and');
+            let url = encodeURIComponent(`https://musicbrainz.org/ws/2/release?query=artist:"${encodeURIComponent(artist)}" AND release:"${encodeURIComponent(metadata['album'])}" AND status:official AND (primarytype:album OR primarytype:single OR primarytype:EP) &fmt=json`)
             let albumInfo = await fetch(`http://localhost:3000?url=${url}`)
             albumInfo = await albumInfo.json()
             albumInfo = getBestRelease({recordings: [albumInfo]}, metadata['artist'])
