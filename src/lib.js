@@ -1,4 +1,5 @@
-const APP_URL = 'http://192.168.0.124:3000'
+//const APP_URL = 'http://192.168.0.124:3000'
+const APP_URL = 'http://localhost:3000'
 
 /**
  * Given a list of recordings containing releases from MusicBrainz, return the oldest release, prioritizing albums
@@ -69,7 +70,7 @@ const parseSiriusXMData = async data => {
  */
 const parseMetadata = async metadata => {
     if (metadata.url.includes('siriusxm')) {
-        metadata = await parseSiriusXMData(metadata)
+        //metadata = await parseSiriusXMData(metadata)
     }
 
     if (!metadata.album) {
@@ -83,6 +84,10 @@ const parseMetadata = async metadata => {
         if (!artist && song.includes(' - ')) {
             song = metadata.song.split(' - ')[1]
             artist = metadata.song.split(' - ')[0]
+        }
+        if ((!song && artist.includes(' - ')) || metadata.url.includes('siriusxm')) {
+            song = metadata.artist.split(' - ')[1]
+            artist = metadata.artist.split(' - ')[0]
         }
 
         album = await getAlbumFromSong_Artist(song, artist)

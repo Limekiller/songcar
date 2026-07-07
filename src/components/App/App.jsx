@@ -41,22 +41,21 @@ const App = () => {
         currentMetadata = await currentMetadata.json()
 
         if (!currentMetadata.song || currentMetadata.song === "") {
+            await new Promise(r => setTimeout(r, 5000))
+            updateMetadata()
             return
         }
 
         currentMetadata = await lib.parseMetadata(currentMetadata)
         setmetadata(currentMetadata)
+
+        await new Promise(r => setTimeout(r, 5000))
+        updateMetadata()
     }
 
     // Fetch metadata from the server every second
     useEffect(() => {
-        const songCheckInterval = setInterval(() => {
-            updateMetadata()
-        }, 1000)
-
-        return () => {
-            clearInterval(songCheckInterval)
-        }
+        updateMetadata()
     }, [])
 
     // When the album changes, attempt to fetch album art
