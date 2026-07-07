@@ -46,8 +46,12 @@ const App = () => {
             return
         }
 
-        currentMetadata = await lib.parseMetadata(currentMetadata)
-        setmetadata(currentMetadata)
+        try {
+            currentMetadata = await lib.parseMetadata(currentMetadata)
+            setmetadata(currentMetadata)
+        } catch (error) {
+            console.log(error)
+        }
 
         await new Promise(r => setTimeout(r, 5000))
         updateMetadata()
