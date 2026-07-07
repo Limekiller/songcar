@@ -1,5 +1,5 @@
-//const APP_URL = 'http://192.168.0.124:3000'
-const APP_URL = 'http://localhost:3000'
+const APP_URL = 'http://192.168.0.124:3000'
+//const APP_URL = 'http://localhost:3000'
 
 /**
  * Given a list of recordings containing releases from MusicBrainz, return the oldest release, prioritizing albums
