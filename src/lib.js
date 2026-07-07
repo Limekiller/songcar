@@ -31,7 +31,7 @@ const getAlbumFromSong_Artist = async (title, artist) => {
     title = title.replace('&', 'and');
     let url = encodeURIComponent(`https://musicbrainz.org/ws/2/recording?query=artist:"${encodeURIComponent(artist)}" AND recording:"${encodeURIComponent(title)}" AND video:false AND (primarytype:album OR primarytype:single OR primarytype:EP) &fmt=json`)
 
-    let mbResponse = await fetch(`${APP_URL}?url=${url}`)
+    let mbResponse = await fetch(`${APP_URL}?url=${url}`, { signal: AbortSignal.timeout(10000) })
     mbResponse = await mbResponse.json()
 
     const album = getBestRelease(mbResponse)

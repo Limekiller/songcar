@@ -81,7 +81,7 @@ const App = () => {
 
             const artist = metadata['artist'].replace('&', 'and');
             let url = encodeURIComponent(`https://musicbrainz.org/ws/2/release?query=artist:"${encodeURIComponent(artist)}" AND release:"${encodeURIComponent(metadata['album'])}" AND status:official AND packaging:None AND (primarytype:album OR primarytype:single OR primarytype:EP) &fmt=json`)
-            let releases = await fetch(`${lib.APP_URL}?url=${url}`)
+            let releases = await fetch(`${lib.APP_URL}?url=${url}`, { signal: AbortSignal.timeout(10000) })
             releases = await releases.json()
 
             let albumInfo = lib.getBestRelease(releases)
