@@ -37,7 +37,13 @@ const App = () => {
      * Pull the playing metadata from the Python server and parse it as necessary
      */
     const updateMetadata = async () => {
-        let currentMetadata = await fetch(`${lib.APP_URL}/metadata`)
+        try {
+            let currentMetadata = await fetch(`${lib.APP_URL}/metadata`)
+        } catch (error) {
+            console.log(error)
+            await new Promise(r => setTimeout(r, 2000))
+            updateMetadata()
+        }
         currentMetadata = await currentMetadata.json()
 
         if (!currentMetadata.song || currentMetadata.song === "") {
