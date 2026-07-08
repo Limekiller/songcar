@@ -122,33 +122,31 @@ const App = () => {
             <AnimatePresence>
                 <motion.img
                     className={styles.bg}
-                    src={albumArt || 'https://coverartarchive.org/release/986b2849-60e1-40bb-b57d-1d0bf10e8873/front-500'}
+                    src={albumArt || 'defaultbackground.jpg'}
                     key={albumArt}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1, transition: { delay: 2, duration: 5 }}}
                     exit={{ opacity: 0, transition: { delay: 10, duration: 0.5 }}}
                 />
             </AnimatePresence>
-            {albumArt ?
-                <AnimatePresence mode="wait">
-                        <motion.img
-                            src={albumArt || ''}
-                            key={albumArt}
-                            style={{
-                                width: "66%",
-                                objectFit: "cover",
-                                boxShadow: "0px 0px 10rem white"
-                            }}
-                            initial={{ opacity: 0, x: '-1rem' }}
-                            animate={{ opacity: 1, x: 0, transition: { delay: 5, duration: 0.5 }}}
-                            exit={{opacity: 0, x: '-1rem', transition: { delay: 5, duration: 0.5 }}}
-                        />
-                </AnimatePresence>
-            : ""}
+            <AnimatePresence mode="wait">
+                    <motion.img
+                        src={albumArt || 'noalbumart.png'}
+                        key={albumArt || 'null'}
+                        style={{
+                            width: "66%",
+                            objectFit: "cover",
+                            boxShadow: "0px 0px 10rem white"
+                        }}
+                        initial={{ opacity: 0, x: '-1rem' }}
+                        animate={{ opacity: 1, x: 0, transition: { delay: 5, duration: 0.5 }}}
+                        exit={{opacity: 0, x: '-1rem', transition: { delay: 5, duration: 0.5 }}}
+                    />
+            </AnimatePresence>
         </>
 
         {metadata.song ?
-            <div className={`${styles.albumData} ${!albumArt ? styles.centered : ''}`}>
+            <div className={`${styles.albumData}`}>
                 <LayoutGroup>
                     <AnimatePresence mode="wait">
                         {animatedLabel(<h2>{metadata.artist}</h2>, metadata.artist)}

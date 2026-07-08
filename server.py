@@ -83,7 +83,9 @@ class Proxy(http.server.SimpleHTTPRequestHandler):
         types = {
             "css": "text/css",
             "js": "text/javascript",
-            "html": "text/html"
+            "html": "text/html",
+            "png": "image/png",
+            "jpg": "image/jpeg"
         }
         mimetype = 'text/html'
         if '.' in path:
