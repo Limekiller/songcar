@@ -39,40 +39,11 @@ const getAlbumFromSong_Artist = async (title, artist) => {
 }
 
 /**
- * Given metadata from a SiriusXM station (which only includes the name of the station),
- * Parse it and then use an API to get the currently playing song and artist. Album is not included (thanks, very cool!)
- * so we then use the above function to try to get the best release matching it
- * @param data {obj}: The playerctl metadata containing SXM info
- * @return {obj}: An object containing song information
- */
-const parseSiriusXMData = async data => {
-    const channelName = data.song.split(' · ')[1]
-    let url = encodeURIComponent(`http://xmplaylist.com/api/station/${channelName.replace(/\W/g, '')}`)
-    let sxmData = await fetch(`${APP_URL}?url=${url}`)
-    sxmData = await sxmData.json()
-
-    const sxmTitle = sxmData.results[0].track.title
-    const sxmArtist = sxmData.results[0].track.artists[0]
-    const sxmAlbum = await getAlbumFromSong_Artist(sxmTitle, sxmArtist)
-
-    return {
-        'artist': sxmArtist,
-        'song': sxmTitle,
-        'album': sxmAlbum?.title || '',
-        'albumId': sxmAlbum?.id || ''
-    }
-}
-
-/**
  * Given a metadata object, modify it (if necessary) to the correct data
  * @param {obj} metadata: The metadata object to parse
  * @return {obj}: The modified metadata object
  */
 const parseMetadata = async metadata => {
-    if (metadata.url.includes('siriusxm')) {
-        //metadata = await parseSiriusXMData(metadata)
-    }
-
     if (!metadata.album) {
         let url = metadata.url
         let song = metadata.song
@@ -105,7 +76,6 @@ const parseMetadata = async metadata => {
 
 export default {
     APP_URL,
-    parseSiriusXMData,
     getAlbumFromSong_Artist,
     getBestRelease,
     parseMetadata
