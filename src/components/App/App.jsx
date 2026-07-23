@@ -14,18 +14,21 @@ const App = () => {
     const [albumArt, setalbumArt] = useState(false)
 
     const metadataRef = useRef(metadata)
-    metadataRef.current = metadata;
+    metadataRef.current = metadata
 
     /**
      * Given a MusicBrainz album ID, we fetch the corresponding album art and then set it
      * @param {str} albumId: The ID of the album
      */
-    const loadAndSetAlbumArt = async albumId => {
-        if (albumId) {
+    const loadAndSetAlbumArt = async albumData => {
+        if (albumData) {
+            let albumURL = albumData.artworkUrl100
+            albumURL = albumURL.split('/').slice(0, -1).join('/') + '/1000x1000bb.jpg'
+
             // Load the cover in the browser via fetch before setting it so that it appears to load right away
-            const albumResp = await fetch(`https://coverartarchive.org/release/${albumId}/front-500`)
+            const albumResp = await fetch(albumURL)
             if (albumResp.status === 200) {
-                setalbumArt(`https://coverartarchive.org/release/${albumId}/front-500`)
+                setalbumArt(albumURL)
                 return
             }
         }
@@ -72,25 +75,27 @@ const App = () => {
     // When the album changes, attempt to fetch album art
     useEffect(() => {
         /**
-         * Use the currently set album to try to fetch its art from MusicBrains
+         * Use the currently set album to try to fetch its art from iTunes
          */
         const getAlbumArt = async () => {
             if (!metadataRef.current.song) {
                 return
             }
 
-            const artist = metadata['artist'].replace('&', 'and');
-            let url = encodeURIComponent(`https://musicbrainz.org/ws/2/release?query=artist:"${encodeURIComponent(artist)}" AND release:"${encodeURIComponent(metadata['album'])}" AND status:official AND packaging:None AND (primarytype:album OR primarytype:single OR primarytype:EP) &fmt=json`)
-            let releases = await fetch(`${lib.APP_URL}?url=${url}`, { signal: AbortSignal.timeout(10000) })
-            releases = await releases.json()
+            const artist = metadata['artist'].replace('&', 'and')
+            let url = encodeURIComponent(`https://itunes.apple.com/search?term=${encodeURIComponent(artist)} ${encodeURIComponent(metadata['album'])}&entity=album&limit=1`)
+            let data = await fetch(`${lib.APP_URL}?url=${url}`, { signal: AbortSignal.timeout(10000) })
+            data = await data.json()
 
-            let albumInfo = lib.getBestRelease(releases)
-            if (!albumInfo && metadataRef.current.album != 'not fetched') {
-                albumInfo = await lib.getAlbumFromSong_Artist(metadata['song'].replace('&', 'and'), artist)
+            let albumData
+            if (data.results.length === 0 && metadataRef.current.album != 'not fetched') {
+                albumData = await lib.getAlbumFromSong_Artist(metadata['song'].replace('&', 'and'), artist)
+            } else {
+                albumData = data.results[0]
             }
 
-            if (albumInfo && albumInfo.id) {
-                loadAndSetAlbumArt(albumInfo.id)
+            if (albumData && albumData.artworkUrl100) {
+                loadAndSetAlbumArt(albumData)
             } else {
                 setalbumArt(false)
             }

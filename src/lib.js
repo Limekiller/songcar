@@ -2,25 +2,6 @@
 const APP_URL = 'http://localhost:3000'
 
 /**
- * Given a list of recordings containing releases from MusicBrainz, return the oldest release, prioritizing albums
- * We also include some conditions to try to filter out the mountains of bad data included in this awful API
- * @param data {obj}: The object containing an array of recordings and releases
- * @return {obj}: The most fitting release we could find
- */
-const getBestRelease = data => {
-    if (!data.recordings || data.recordings.length == 0) {
-        return false
-    }
-
-    // Remove releases without a date
-    let releases = data.recordings[0].releases.filter(release => release.date !== undefined);
-
-    // Order by oldest first
-    releases = releases.sort((a, b) => new Date(a.date) - new Date(b.date))
-    return releases[0]
-}
-
-/**
  * Given just a song title and artist name, attempt to get the name of the best release containing the song
  * @param title {str}: The song title
  * @param artist {str}: The artist name
@@ -29,13 +10,22 @@ const getBestRelease = data => {
 const getAlbumFromSong_Artist = async (title, artist) => {
     artist = artist.replace('&', 'and');
     title = title.replace('&', 'and');
-    let url = encodeURIComponent(`https://musicbrainz.org/ws/2/recording?query=artist:"${encodeURIComponent(artist)}" AND recording:"${encodeURIComponent(title)}" AND video:false AND (primarytype:album OR primarytype:single OR primarytype:EP) &fmt=json`)
+    let url = encodeURIComponent(`https://itunes.apple.com/search?term=${artist} ${title}&entity=song&limit=1`)
 
-    let mbResponse = await fetch(`${APP_URL}?url=${url}`, { signal: AbortSignal.timeout(10000) })
-    mbResponse = await mbResponse.json()
+    let data = await fetch(`${APP_URL}?url=${url}`, { signal: AbortSignal.timeout(10000) })
+    data = await data.json()
 
-    const album = getBestRelease(mbResponse)
-    return album
+    if (data.results.length > 0 && data.results[0].collectionId) {
+        url = encodeURIComponent(`https://itunes.apple.com/lookup?id=${data.results[0].collectionId}`)
+        data = await fetch(`${APP_URL}?url=${url}`, { signal: AbortSignal.timeout(10000) })
+        data = await data.json()
+
+        if (data.results.length > 0) {
+            return data.results[0]
+        }
+    }
+
+    return false
 }
 
 /**
@@ -65,8 +55,8 @@ const parseMetadata = async metadata => {
         metadata = {
             'song': song,
             'artist': artist,
-            'album': album?.title || '',
-            'albumId': album?.id || '',
+            'album': album?.collectionName || '',
+            'albumId': album?.collectionId || '',
             'url': url || '',
         }
     }
@@ -77,6 +67,5 @@ const parseMetadata = async metadata => {
 export default {
     APP_URL,
     getAlbumFromSong_Artist,
-    getBestRelease,
     parseMetadata
 }
